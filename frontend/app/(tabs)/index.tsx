@@ -26,7 +26,16 @@ interface User {
 
 export default function HomeScreen() {
   const { user, loading } = useAuth();
-  const { fetchDonations, fridayDonations, deleteDonation, getTotalDonations, getDonationsByPurpose ,fetchSummary,summary} = useDonations();
+  const { fetchDonations, fridayDonations, deleteDonation, getDonationsByPurpose ,fetchSummary,summary} = useDonations();
+
+  function formatPrice(value: number | string): string {
+  const number = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(number)) return '0';
+  return new Intl.NumberFormat('bs-BA', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(number);
+}
 
   useEffect(() => {
     if (!loading && !user) {
@@ -50,7 +59,6 @@ export default function HomeScreen() {
     fetchSummary(Number(user.id)); 
   }
 }, [user]);
-  const totalDonations = getTotalDonations();
   const donationsByPurpose = getDonationsByPurpose();
   const currentMonth = new Date().toLocaleDateString('bs-BA', { month: 'long', year: 'numeric' });
   const recentDonations = fridayDonations.slice(-3).reverse();
@@ -99,7 +107,7 @@ console.log(recentDonations,"recentDonations")
             <View style={styles.statIcon}>
               <Text style={[styles.dinarSign, { color: Colors.primary }]}>Din</Text>
             </View>
-            <Text style={styles.statValue}>{totalDonations} Din</Text>
+           <Text style={styles.statValue}>{formatPrice(summary.friday)} Din</Text>
             <Text style={styles.statLabel}>Ukupno donacija</Text>
           </View>
 
@@ -125,20 +133,17 @@ console.log(recentDonations,"recentDonations")
 <View style={styles.statsContainer}>
   <View style={styles.statCard}>
     <Text style={styles.statLabel}>Fitr</Text>
-    <Text style={styles.statValue}>{summary.fitr} Din</Text>
-  </View>
+<Text style={styles.statValue}>{formatPrice(summary.fitr)} Din</Text>  </View>
   <View style={styles.statCard}>
     <Text style={styles.statLabel}>Zekat</Text>
-    <Text style={styles.statValue}>{summary.zakat} Din</Text>
-  </View>
+<Text style={styles.statValue}>{formatPrice(summary.zakat)} Din</Text>  </View>
 </View>
-
           {recentDonations.length > 0 ? (
             <View style={styles.donationsList}>
               {recentDonations.map((donation) => (
                 <View key={donation.id} style={styles.donationItem}>
                   <View style={styles.donationInfo}>
-                    <Text style={styles.donationAmount}>{donation.amount} Din</Text>
+                   <Text style={styles.donationAmount}>{formatPrice(donation.amount)} Din</Text>
                     <Text style={styles.donationPurpose}>{donation.purposeName}</Text>
                   </View>
                   <View style={styles.donationActions}>
@@ -176,7 +181,7 @@ console.log(recentDonations,"recentDonations")
               {Object.entries(donationsByPurpose).map(([purpose, amount]) => (
                 <View key={purpose} style={styles.purposeItem}>
                   <Text style={styles.purposeName}>{purpose}</Text>
-                  <Text style={styles.purposeAmount}>{amount} Din</Text>
+                  <Text style={styles.purposeAmount}>{formatPrice(amount)} Din</Text>
                 </View>
               ))}
             </View>
