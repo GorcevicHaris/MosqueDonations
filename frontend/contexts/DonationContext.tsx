@@ -12,7 +12,7 @@ interface Donation {
   donation_date: string;
   created_at: string;
 }
-interface FitrZakatPayload {
+interface FitrZakatFridayPayload {
   mosque_id: number;
   user_id: number;
   amount: number;
@@ -32,10 +32,9 @@ interface DonationContextType {
   fetchDonations: (userId: number) => Promise<void>;
   getTotalDonations: () => number;
   getDonationsByPurpose: () => Record<string, number>;
-  addFitrDonation: (donation: FitrZakatPayload) => Promise<void>;
-  addZakatDonation: (donation: FitrZakatPayload) => Promise<void>;
-  addFridayDonation: (donation: FitrZakatPayload) => Promise<void>;
-
+  addFitrDonation: (donation: FitrZakatFridayPayload) => Promise<void>;
+  addZakatDonation: (donation: FitrZakatFridayPayload) => Promise<void>;
+  addFridayDonation: (donation: FitrZakatFridayPayload) => Promise<void>;
   fetchSummary: (userId:number) => Promise<void>;
   
   summary: { friday: number; fitr: number; zakat: number };  // <--- Dodaj ovo
@@ -105,62 +104,93 @@ export const DonationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-   const addFitrDonation = async (donation: FitrZakatPayload) => {
-  const token = await AsyncStorage.getItem('token');
-  const response = await fetch(`${API_URL}/donation/fitr`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(donation),
-  });
-  if (!response.ok) throw new Error('Greska prilikom dodavanja fitr donacije');
+ const addFridayDonation = async (donation: FitrZakatFridayPayload) => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    const response = await fetch(`${API_URL}/donation/friday`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(donation),
+    });
+    if (!response.ok) throw new Error('Greska prilikom dodavanja petkovne donacije');
+
+    // Nakon dodavanja, osveži i donacije i summary:
+    await fetchDonations(donation.user_id);
+    await fetchSummary(donation.user_id);
+  } catch (error) {
+    console.error('Error adding friday donation:', error);
+    throw error;
+  }
 };
 
-const addZakatDonation = async (donation: FitrZakatPayload) => {
-  const token = await AsyncStorage.getItem('token');
-  const response = await fetch(`${API_URL}/donation/zakat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(donation),
-  });
-  if (!response.ok) throw new Error('Greska prilikom dodavanja zakat donacije');
+const addFitrDonation = async (donation: FitrZakatFridayPayload) => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    const response = await fetch(`${API_URL}/donation/fitr`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(donation),
+    });
+    if (!response.ok) throw new Error('Greska prilikom dodavanja fitr donacije');
+
+    // Osveži summary nakon dodavanja:
+    await fetchSummary(donation.user_id);
+  } catch (error) {
+    console.error('Error adding fitr donation:', error);
+    throw error;
+  }
 };
 
-const addFridayDonation = async (donation: FitrZakatPayload) => {
-  const token = await AsyncStorage.getItem('token');
-  const response = await fetch(`${API_URL}/donation/friday`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(donation),
-  });
-  if (!response.ok) throw new Error('Greska prilikom dodavanja zakat donacije');
+const addZakatDonation = async (donation: FitrZakatFridayPayload) => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    const response = await fetch(`${API_URL}/donation/zakat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(donation),
+    });
+    if (!response.ok) throw new Error('Greska prilikom dodavanja zakat donacije');
+
+    // Osveži summary nakon dodavanja:
+    await fetchSummary(donation.user_id);
+  } catch (error) {
+    console.error('Error adding zakat donation:', error);
+    throw error;
+  }
 };
 
   
 
-  const deleteDonation = async (donationId: number) => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      const response = await fetch(`http://192.168.0.103:8080/donation/friday/${donationId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to delete donation');
-      setFridayDonations(fridayDonations.filter((donation) => donation.id !== donationId));
-      await fetchDonations(fridayDonations.find((d) => d.id === donationId)?.user_id || 0);
-    } catch (error) {
-      console.error('Error deleting donation:', error);
-      throw error;
-    }
-  };
+ const deleteDonation = async (donationId: number) => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+
+    const donationToDelete = fridayDonations.find(d => d.id === donationId);
+    if (!donationToDelete) throw new Error('Donacija nije pronađena');
+
+    const response = await fetch(`${API_URL}/donation/friday/${donationId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Greska prilikom brisanja donacije');
+
+    await fetchDonations(donationToDelete.user_id);
+    await fetchSummary(donationToDelete.user_id);
+  } catch (error) {
+    console.error('Error deleting donation:', error);
+    throw error;
+  }
+};
+
 
   const getTotalDonations = () => {
     return fridayDonations.reduce((total, donation) => total + donation.amount, 0);

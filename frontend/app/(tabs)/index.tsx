@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router } from 'expo-router'
 import { useAuth } from '@/contexts/AuthContext';
 import { useDonations } from '@/contexts/DonationContext';
 import { Colors } from '../../constants/Colors';
@@ -27,6 +27,13 @@ interface User {
 export default function HomeScreen() {
   const { user, loading } = useAuth();
   const { fetchDonations, fridayDonations, deleteDonation, getDonationsByPurpose ,fetchSummary,summary} = useDonations();
+  const [showAll, setShowAll] = React.useState(false);
+  const sortedDonations = [...fridayDonations].sort((a, b) => {
+  return new Date(b.donation_date).getTime() - new Date(a.donation_date).getTime();
+});
+const donationsToShow = showAll
+  ? [...fridayDonations].reverse()
+  : [...fridayDonations].reverse().slice(0, 3);
 
   function formatPrice(value: number | string): string {
   const number = typeof value === 'string' ? parseFloat(value) : value;
@@ -52,7 +59,6 @@ export default function HomeScreen() {
       </View>
     );
   }
-
   useEffect(() => {
   if (user) {
     fetchDonations(Number(user.id));
@@ -61,7 +67,10 @@ export default function HomeScreen() {
 }, [user]);
   const donationsByPurpose = getDonationsByPurpose();
   const currentMonth = new Date().toLocaleDateString('bs-BA', { month: 'long', year: 'numeric' });
-  const recentDonations = fridayDonations.slice(-3).reverse();
+  const recentDonations = [...fridayDonations].sort((a, b) => {
+  return new Date(b.donation_date).getTime() - new Date(a.donation_date).getTime();
+});
+
 console.log(recentDonations,"recentDonations")
   const handleDeleteDonation = (donationId: number) => {
     Alert.alert(
@@ -138,40 +147,54 @@ console.log(recentDonations,"recentDonations")
     <Text style={styles.statLabel}>Zekat</Text>
 <Text style={styles.statValue}>{formatPrice(summary.zakat)} Din</Text>  </View>
 </View>
-          {recentDonations.length > 0 ? (
-            <View style={styles.donationsList}>
-              {recentDonations.map((donation) => (
-                <View key={donation.id} style={styles.donationItem}>
-                  <View style={styles.donationInfo}>
-                   <Text style={styles.donationAmount}>{formatPrice(donation.amount)} Din</Text>
-                    <Text style={styles.donationPurpose}>{donation.purposeName}</Text>
-                  </View>
-                  <View style={styles.donationActions}>
-                    <Text style={styles.donationDate}>
-                      {new Date(donation.donation_date).toLocaleDateString('bs-BA')}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => handleDeleteDonation(donation.id)}
-                      style={styles.deleteButton}
-                    >
-                      <Trash2 color={Colors.warning} size={20} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>Nema dodanih donacija</Text>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={() => router.push('/(tabs)/add-donation')}
-              >
-                <Plus color={Colors.white} size={20} />
-                <Text style={styles.primaryButtonText}>Dodaj prvu donaciju</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+{donationsToShow.length > 0 ? (
+  <>
+    <View style={styles.donationsList}>
+      {donationsToShow.map((donation) => (
+        <View key={donation.id} style={styles.donationItem}>
+          <View style={styles.donationInfo}>
+            <Text style={styles.donationAmount}>{formatPrice(donation.amount)} Din</Text>
+            <Text style={styles.donationPurpose}>{donation.purposeName}</Text>
+          </View>
+          <View style={styles.donationActions}>
+            <Text style={styles.donationDate}>
+              {new Date(donation.donation_date).toLocaleDateString('bs-BA')}
+            </Text>
+            <TouchableOpacity
+              onPress={() => handleDeleteDonation(donation.id)}
+              style={styles.deleteButton}
+            >
+              <Trash2 color={Colors.warning} size={20} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+    </View>
+
+    {sortedDonations.length > 3 && (
+      <TouchableOpacity
+        onPress={() => setShowAll(!showAll)}
+        style={styles.showMoreButton}
+      >
+        <Text style={styles.showMoreText}>
+          {showAll ? 'Prikaži manje' : `Prikaži sve (${sortedDonations.length})`}
+        </Text>
+      </TouchableOpacity>
+    )}
+  </>
+) : (
+  <View style={styles.emptyState}>
+    <Text style={styles.emptyStateText}>Nema dodanih donacija</Text>
+    <TouchableOpacity
+      style={styles.primaryButton}
+      onPress={() => router.push('/(tabs)/add-donation')}
+    >
+      <Plus color={Colors.white} size={20} />
+      <Text style={styles.primaryButtonText}>Dodaj prvu donaciju</Text>
+    </TouchableOpacity>
+  </View>
+)}
+
         </View>
 
         {Object.keys(donationsByPurpose).length > 0 && (
@@ -423,5 +446,19 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'Inter-Bold',
   },
+  showMoreButton: {
+  marginTop: 12,
+  alignSelf: 'center',
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  borderRadius: 8,
+  backgroundColor: Colors.primary,
+},
+showMoreText: {
+  color: Colors.white,
+  fontFamily: 'Inter-SemiBold',
+  fontSize: 14,
+},
+
 });
 //problem je sto dodaje samo za petak
