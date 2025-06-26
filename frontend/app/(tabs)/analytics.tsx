@@ -18,31 +18,26 @@ export default function AnalyticsScreen() {
     getTotalDonationsCount,
   } = useDonations();
 
-  // Ukupni iznos donacija
-  const totalDonations = summary.friday + summary.fitr + summary.zakat;
-
-  // Ukupan broj donacija (friday + fitr + zakat)
+const totalDonations =
+  (Number(summary.friday) || 0) +
+  (Number(summary.fitr) || 0) +
+  (Number(summary.zakat) || 0);
+  
   const totalCount = getTotalDonationsCount();
-
-  // Prosečna donacija ukupno
-  const averageDonation = totalCount > 0 ? totalDonations / totalCount : 0;
-
-  // Broj petkovnih donacija
+  console.log(totalCount,"totalno",totalDonations)
+ const averageDonation = totalCount > 0 ? totalDonations / totalCount : 0;
+  console.log(averageDonation,"average")
   const fridayCount = fridayDonations.length;
 
-  // Broj fitr i zakat donacija uzimamo iz summary count polja jer nemamo nizove
   const fitrCount = summary.countFitr;
   const zakatCount = summary.countZakat;
 
-  // Prosečne vrednosti po tipu
   const averageFriday = fridayCount > 0 ? summary.friday / fridayCount : 0;
   const averageFitr = fitrCount > 0 ? summary.fitr / fitrCount : 0;
   const averageZakat = zakatCount > 0 ? summary.zakat / zakatCount : 0;
 
-  // Za analitiku svih donacija koristi samo fridayDonations jer ostalih nema
   const allDonations = fridayDonations;
 
-  // Mesečni pregled
   const monthlyData = allDonations.reduce((acc, donation) => {
     const month = new Date(donation.donation_date).toLocaleDateString('bs-BA', {
       month: 'long',
@@ -146,7 +141,6 @@ export default function AnalyticsScreen() {
           </View>
         )}
 
-        {/* Mesečni pregled */}
         {Object.keys(monthlyData).length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Mesečni pregled</Text>
@@ -154,7 +148,7 @@ export default function AnalyticsScreen() {
               {Object.entries(monthlyData).map(([month, amount]) => (
                 <View key={month} style={styles.monthlyItem}>
                   <Text style={styles.monthName}>{month}</Text>
-                  <Text style={styles.monthAmount}>{formatPrice(amount)} Din</Text>
+                  <Text style={styles.monthAmount}>{formatPrice(Number(amount))} Din</Text>
                 </View>
               ))}
             </View>
