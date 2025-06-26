@@ -314,27 +314,60 @@ app.get("/donations/summary/:userId", async (req, res) => {
   const { userId } = req.params;
   const conn = await getConnection();
   try {
-    const [friday] = await conn.execute(
-      "SELECT SUM(amount) as total FROM friday_donations WHERE user_id = ?",
+    const [fridaySum] = await conn.execute(
+      "SELECT SUM(amount) as total, COUNT(*) as count FROM friday_donations WHERE user_id = ?",
       [userId]
     );
-    const [fitr] = await conn.execute(
-      "SELECT SUM(amount) as total FROM fitr_donations WHERE user_id = ?",
+    const [fitrSum] = await conn.execute(
+      "SELECT SUM(amount) as total, COUNT(*) as count FROM fitr_donations WHERE user_id = ?",
       [userId]
     );
-    const [zakat] = await conn.execute(
-      "SELECT SUM(amount) as total FROM zakat_donations WHERE user_id = ?",
+    const [zakatSum] = await conn.execute(
+      "SELECT SUM(amount) as total, COUNT(*) as count FROM zakat_donations WHERE user_id = ?",
       [userId]
     );
 
     res.json({
-      friday: friday[0].total || 0,
-      fitr: fitr[0].total || 0,
-      zakat: zakat[0].total || 0,
+      friday: fridaySum[0].total || 0,
+      countFriday: fridaySum[0].count || 0,
+      fitr: fitrSum[0].total || 0,
+      countFitr: fitrSum[0].count || 0,
+      zakat: zakatSum[0].total || 0,
+      countZakat: zakatSum[0].count || 0,
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Greška prilikom izvlačenja podataka." });
+  } finally {
+    await conn.end();
+  }
+});
+
+// GET /donations/count/:userId - vraća broj fitr i zakat donacija za korisnika
+app.get("/donations/count/:userId", async (req, res) => {
+  const { userId } = req.params;
+  const conn = await getConnection();
+
+  try {
+    const [fitrCountResult] = await conn.execute(
+      "SELECT COUNT(*) AS count FROM fitr_donations WHERE user_id = ?",
+      [userId]
+    );
+
+    const [zakatCountResult] = await conn.execute(
+      "SELECT COUNT(*) AS count FROM zakat_donations WHERE user_id = ?",
+      [userId]
+    );
+
+    res.json({
+      fitrCount: fitrCountResult[0].count || 0,
+      zakatCount: zakatCountResult[0].count || 0,
+    });
+  } catch (err) {
+    console.error(err);
+    res
+      .status(500)
+      .json({ error: "Greška prilikom izvlačenja broja donacija." });
   } finally {
     await conn.end();
   }

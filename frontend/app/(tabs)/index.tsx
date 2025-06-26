@@ -14,15 +14,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDonations } from '@/contexts/DonationContext';
 import { Colors } from '../../constants/Colors';
 import { Building, Calendar, Plus, Trash2 } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from '@/constants/Api';
-
-interface User {
-  id: number;
-  fullName: string;
-  mosqueId: number;
-  mosqueName: string;
-}
 
 export default function HomeScreen() {
   const { user, loading } = useAuth();
@@ -71,7 +62,7 @@ const donationsToShow = showAll
   return new Date(b.donation_date).getTime() - new Date(a.donation_date).getTime();
 });
 
-console.log(recentDonations,"recentDonations")
+// console.log(recentDonations,"recentDonations")
   const handleDeleteDonation = (donationId: number) => {
     Alert.alert(
       'Obriši donaciju',

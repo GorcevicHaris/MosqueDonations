@@ -11,33 +11,67 @@ import { Colors } from '../../constants/Colors';
 import { BarChart3, TrendingUp, Calendar, Target } from 'lucide-react-native';
 
 export default function AnalyticsScreen() {
-  const { fridayDonations, getTotalDonations, getDonationsByPurpose } = useDonations();
+  const {
+    fridayDonations,
+    getDonationsByPurpose,
+    summary,
+    getTotalDonationsCount,
+  } = useDonations();
 
-  const totalDonations = getTotalDonations() || 0; // Default na 0 ako je undefined/NaN
-  const donationsByPurpose = getDonationsByPurpose();
-  const averageDonation = fridayDonations.length > 0 ? totalDonations / fridayDonations.length : 0;
+  // Ukupni iznos donacija
+  const totalDonations = summary.friday + summary.fitr + summary.zakat;
 
-  // Get monthly data
-  const monthlyData = fridayDonations.reduce((acc, donation) => {
-    const month = new Date(donation.donation_date).toLocaleDateString('bs-BA', { 
-      month: 'long', 
-      year: 'numeric' 
+  // Ukupan broj donacija (friday + fitr + zakat)
+  const totalCount = getTotalDonationsCount();
+
+  // Prosečna donacija ukupno
+  const averageDonation = totalCount > 0 ? totalDonations / totalCount : 0;
+
+  // Broj petkovnih donacija
+  const fridayCount = fridayDonations.length;
+
+  // Broj fitr i zakat donacija uzimamo iz summary count polja jer nemamo nizove
+  const fitrCount = summary.countFitr;
+  const zakatCount = summary.countZakat;
+
+  // Prosečne vrednosti po tipu
+  const averageFriday = fridayCount > 0 ? summary.friday / fridayCount : 0;
+  const averageFitr = fitrCount > 0 ? summary.fitr / fitrCount : 0;
+  const averageZakat = zakatCount > 0 ? summary.zakat / zakatCount : 0;
+
+  // Za analitiku svih donacija koristi samo fridayDonations jer ostalih nema
+  const allDonations = fridayDonations;
+
+  // Mesečni pregled
+  const monthlyData = allDonations.reduce((acc, donation) => {
+    const month = new Date(donation.donation_date).toLocaleDateString('bs-BA', {
+      month: 'long',
+      year: 'numeric',
     });
     acc[month] = (acc[month] || 0) + donation.amount;
     return acc;
   }, {} as { [key: string]: number });
 
-  // Get recent activity
-  const recentActivity = fridayDonations
+  // Nedavna aktivnost (sortirano po datumu)
+  const recentActivity = allDonations
+    .slice()
     .sort((a, b) => new Date(b.donation_date).getTime() - new Date(a.donation_date).getTime())
     .slice(0, 5);
 
+  function formatPrice(value: number | string): string {
+    const number = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(number)) return '0';
+    return new Intl.NumberFormat('bs-BA', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(number);
+  }
+
+  const donationsByPurpose = getDonationsByPurpose();
+
   return (
     <ScrollView style={styles.container}>
-      <LinearGradient
-        colors={[Colors.primary, Colors.primaryLight]}
-        style={styles.header}
-      >
+      <LinearGradient colors={[Colors.primary, Colors.primaryLight]} style={styles.header}>
         <View style={styles.headerContent}>
           <BarChart3 color={Colors.white} size={32} />
           <Text style={styles.headerTitle}>Analitika donacija</Text>
@@ -46,32 +80,47 @@ export default function AnalyticsScreen() {
       </LinearGradient>
 
       <View style={styles.content}>
+        {/* Ukupno i brojevi donacija */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <View style={styles.statIcon}>
-              <TrendingUp color={Colors.success} size={24} />
-            </View>
-            <Text style={styles.statValue}>{totalDonations} Din</Text>
+            <TrendingUp color={Colors.success} size={24} />
+            <Text style={styles.statValue}>{formatPrice(totalDonations)} Din</Text>
             <Text style={styles.statLabel}>Ukupno donacija</Text>
           </View>
 
           <View style={styles.statCard}>
-            <View style={styles.statIcon}>
-              <Calendar color={Colors.primary} size={24} />
-            </View>
-            <Text style={styles.statValue}>{fridayDonations.length}</Text>
-            <Text style={styles.statLabel}>Broj donacija</Text>
+            <Calendar color={Colors.primary} size={24} />
+            <Text style={styles.statValue}>{totalCount}</Text>
+            <Text style={styles.statLabel}>Ukupan broj donacija</Text>
           </View>
 
           <View style={styles.statCard}>
-            <View style={styles.statIcon}>
-              <Target color={Colors.accent} size={24} />
-            </View>
-            <Text style={styles.statValue}>{averageDonation} Din</Text>
+            <Target color={Colors.accent} size={24} />
+            <Text style={styles.statValue}>{formatPrice(averageDonation)} Din</Text>
             <Text style={styles.statLabel}>Prosečna donacija</Text>
           </View>
         </View>
 
+        {/* Broj i prosečna vrednost po tipu donacije */}
+        <View style={styles.statsGrid}>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Petkovnih donacija</Text>
+            <Text style={styles.statValue}>{fridayCount}</Text>
+            <Text style={styles.statLabel}>Prosečno: {formatPrice(averageFriday)} Din</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Fitr donacija</Text>
+            <Text style={styles.statValue}>{fitrCount}</Text>
+            <Text style={styles.statLabel}>Prosečno: {formatPrice(averageFitr)} Din</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Zakat donacija</Text>
+            <Text style={styles.statValue}>{zakatCount}</Text>
+            <Text style={styles.statLabel}>Prosečno: {formatPrice(averageZakat)} Din</Text>
+          </View>
+        </View>
+
+        {/* Donacije po nameni */}
         {Object.keys(donationsByPurpose).length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Donacije po nameni</Text>
@@ -79,24 +128,17 @@ export default function AnalyticsScreen() {
               {Object.entries(donationsByPurpose)
                 .sort(([, a], [, b]) => b - a)
                 .map(([purpose, amount]) => {
-                  const percentage = totalDonations > 0 ? (amount / totalDonations) * 100 : 0; // Izbegni deljenje sa 0
+                  const percentage = totalDonations > 0 ? (amount / totalDonations) * 100 : 0;
                   return (
                     <View key={purpose} style={styles.purposeItem}>
                       <View style={styles.purposeInfo}>
                         <Text style={styles.purposeName}>{purpose}</Text>
-                        <Text style={styles.purposeAmount}>{amount} Din</Text>
+                        <Text style={styles.purposeAmount}>{formatPrice(amount)} Din</Text>
                       </View>
                       <View style={styles.progressBar}>
-                        <View 
-                          style={[
-                            styles.progressFill, 
-                            { width: `${percentage}%` }
-                          ]} 
-                        />
+                        <View style={[styles.progressFill, { width: `${percentage}%` }]} />
                       </View>
-                      <Text style={styles.purposePercentage}>
-                        {percentage}%
-                      </Text>
+                      <Text style={styles.purposePercentage}>{percentage.toFixed(1)}%</Text>
                     </View>
                   );
                 })}
@@ -104,6 +146,7 @@ export default function AnalyticsScreen() {
           </View>
         )}
 
+        {/* Mesečni pregled */}
         {Object.keys(monthlyData).length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Mesečni pregled</Text>
@@ -111,13 +154,14 @@ export default function AnalyticsScreen() {
               {Object.entries(monthlyData).map(([month, amount]) => (
                 <View key={month} style={styles.monthlyItem}>
                   <Text style={styles.monthName}>{month}</Text>
-                  <Text style={styles.monthAmount}>{amount} Din</Text>
+                  <Text style={styles.monthAmount}>{formatPrice(amount)} Din</Text>
                 </View>
               ))}
             </View>
           </View>
         )}
 
+        {/* Nedavna aktivnost */}
         {recentActivity.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Nedavna aktivnost</Text>
@@ -125,12 +169,8 @@ export default function AnalyticsScreen() {
               {recentActivity.map((donation) => (
                 <View key={donation.id} style={styles.activityItem}>
                   <View style={styles.activityInfo}>
-                    <Text style={styles.activityAmount}>
-                      {donation.amount} Din
-                    </Text>
-                    <Text style={styles.activityPurpose}>
-                      {donation.purposeName}
-                    </Text>
+                    <Text style={styles.activityAmount}>{formatPrice(donation.amount)} Din</Text>
+                    <Text style={styles.activityPurpose}>{donation.purposeName}</Text>
                   </View>
                   <Text style={styles.activityDate}>
                     {new Date(donation.donation_date).toLocaleDateString('bs-BA')}
@@ -141,7 +181,8 @@ export default function AnalyticsScreen() {
           </View>
         )}
 
-        {fridayDonations.length === 0 && (
+        {/* Empty state */}
+        {totalCount === 0 && (
           <View style={styles.emptyState}>
             <BarChart3 color={Colors.textLight} size={64} />
             <Text style={styles.emptyStateTitle}>Nema podataka za analizu</Text>
@@ -154,6 +195,9 @@ export default function AnalyticsScreen() {
     </ScrollView>
   );
 }
+
+// Styles ostaju isti kao što si dao
+
 
 const styles = StyleSheet.create({
   container: {
