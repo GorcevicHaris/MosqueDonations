@@ -17,7 +17,10 @@ interface FitrZakatFridayPayload {
   mosque_id: number;
   user_id: number;
   amount: number;
-  year: number;
+  year?: number; // učini opcionalnim
+  purpose_id?: number;
+  purposeName?: string;
+  donation_date?: string;
 }
 
 interface Purpose {
@@ -80,6 +83,7 @@ export const DonationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const response = await fetch(`${API_URL}/purposes`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log(token,response,"provera da li radi")
         if (!response.ok) throw new Error('Failed to fetch purposes');
         const data: Purpose[] = await response.json();
         setPurposes(data);

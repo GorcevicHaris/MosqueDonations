@@ -237,6 +237,7 @@ app.get("/mosques", async (req, res) => {
 });
 // GET /purposes - Retrieve all purposes
 app.get("/purposes", authenticateToken, async (req, res) => {
+  console.log("radil");
   let conn;
   try {
     conn = await getConnection();
