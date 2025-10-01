@@ -23,7 +23,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
-  const handleLogin = async () => {
+const handleLogin = async () => {
   if (!email || !password) {
     Alert.alert('Greška', 'Molimo unesite email i lozinku');
     return;
@@ -32,9 +32,9 @@ export default function LoginScreen() {
   setLoading(true);
   try {
     const response = await axios.post(`${API_URL}/login`, { email, password });
-    // console.log(response.data,response.data.token,"provera")
+
     if (response.data && response.data.token) {
-      const success = await login(email, password); // možeš i direktno koristiti `response.data.user`
+      const success = await login(email, password); 
       if (success) {
         router.replace('/(tabs)');
       } else {
@@ -44,20 +44,23 @@ export default function LoginScreen() {
       Alert.alert('Greška', 'Pogrešan email ili lozinka');
     }
   } catch (err) {
-  const error = err as AxiosError;
+    const error = err as AxiosError;
 
-  if (error.response?.status === 404) {
-    Alert.alert('Greška', 'Korisnik nije pronađen');
-  } else if (error.response?.status === 401) {
-    Alert.alert('Greška', 'Neispravni podaci za prijavu');
-  } else {
-    Alert.alert('Greška', 'Greška prilikom povezivanja sa serverom');
+    if (error.response?.status === 404) {
+      Alert.alert('Greška', 'Korisnik nije pronađen');
+    } else if (error.response?.status === 401) {
+      Alert.alert('Greška', 'Neispravni podaci za prijavu');
+    } else {
+      Alert.alert('Greška', 'Greška prilikom povezivanja sa serverom');
+    }
+
+    console.error(error.response?.data || error.message);
+  } finally {
+    // ✅ always reset loading, success or error
+    setLoading(false);
   }
-
-  console.error(error.response?.data || error.message);
-}
-
 };
+
 
 
   return (

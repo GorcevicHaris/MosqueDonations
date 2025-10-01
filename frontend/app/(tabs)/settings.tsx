@@ -34,7 +34,7 @@ export default function SettingsScreen() {
           style: 'cancel',
         },
         {
-          text: 'Odjavi se',
+          text: 'Odjavi se',  
           style: 'destructive',
           onPress: async () => {
             await logout();
@@ -44,6 +44,10 @@ export default function SettingsScreen() {
       ]
     );
   };
+
+  function handleNavigation(){
+    router.push('/mosque-details');
+  }
 
   if (!user) {
     return null;
@@ -90,13 +94,14 @@ export default function SettingsScreen() {
             <ChevronRight color={Colors.textLight} size={20} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemContent}>
-              <Building color={Colors.textSecondary} size={20} />
-              <Text style={styles.menuItemText}>Podaci o džamiji</Text>
-            </View>
-            <ChevronRight color={Colors.textLight} size={20} />
-          </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem} onPress={handleNavigation}>
+          <View style={styles.menuItemContent}>
+          <Building color={Colors.textSecondary} size={20} />
+          <Text style={styles.menuItemText}>Podaci o džamiji</Text>
+          </View>
+          <ChevronRight color={Colors.textLight} size={20} />
+</TouchableOpacity>
+
         </View>
 
         <View style={styles.menuSection}>

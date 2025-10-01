@@ -18,6 +18,7 @@ import {
   PieChart as RNPieChart,
   ContributionGraph,
   ProgressChart,
+  StackedBarChart, 
 } from 'react-native-chart-kit';
 
 const screenWidth = Dimensions.get('window').width;
@@ -215,6 +216,30 @@ export default function AnalyticsScreen() {
       maximumFractionDigits: 2,
     }).format(number);
   }
+const prepareHorizontalBarData = () => {
+  // Provjera da li postoji i da li je objekat
+  if (!donationsByPurpose || typeof donationsByPurpose !== 'object') {
+    return {
+      labels: [],
+      datasets: [{ data: [] }]
+    };
+  }
+
+  const purposeEntries = Object.entries(donationsByPurpose)
+    .filter(([, amount]) => typeof amount === 'number') // Filtriranje samo numeričkih vrijednosti
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5);
+
+  return {
+    labels: purposeEntries.map(([purpose]) => purpose.substring(0, 15)), // Skraćivanje dugih naziva
+    datasets: [{
+      data: purposeEntries.map(([, amount]) => amount)
+    }]
+  };
+};
+
+
+const horizontalBarData = prepareHorizontalBarData();
 
   const donationsByPurpose: PurposeData = getDonationsByPurpose();
 
@@ -223,6 +248,7 @@ export default function AnalyticsScreen() {
     .slice()
     .sort((a, b) => new Date(b.donation_date).getTime() - new Date(a.donation_date).getTime())
     .slice(0, 5);
+console.log("Donations by purpose:", donationsByPurpose);
 
   return (
     <ScrollView style={styles.container}>
@@ -434,8 +460,40 @@ export default function AnalyticsScreen() {
             </View>
           </View>
         )}
+{Object.keys(donationsByPurpose || {}).length > 0 ? (
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>
+      <BarChart3 color={Colors.primary} size={20} /> Top namene
+    </Text>
+    <View style={styles.chartContainer}>
+      {horizontalBarData.labels.length > 0 ? (
+        <BarChart
+          data={horizontalBarData}
+          width={screenWidth - 40}
+          height={220}
+          yAxisLabel=""
+          yAxisSuffix=" Din"
+          chartConfig={{
+            ...chartConfig,
+            barPercentage: 0.7,
+            decimalPlaces: 0,
+            propsForLabels: {
+              fontSize: 10,
+            },
+          }}
+          fromZero
+          showBarTops={false}
+          style={styles.chart}
+        />
+      ) : (
+        <Text style={styles.emptyStateText}>
+          Nema podataka za prikaz
+        </Text>
+      )}
+    </View>
+  </View>
+) : null}
 
-        {/* Empty State */}
         {totalCount === 0 && (
           <View style={styles.emptyState}>
             <BarChart3 color={Colors.textLight} size={64} />
@@ -666,4 +724,35 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
+horizontalBarContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 12,
+},
+horizontalBarLabel: {
+  fontSize: 12,
+  fontFamily: 'Inter-Medium',
+  color: Colors.text,
+  width: 80,
+  marginRight: 8,
+},
+horizontalBar: {
+  flex: 1,
+  height: 16,
+  backgroundColor: Colors.gray[200],
+  borderRadius: 8,
+  overflow: 'hidden',
+},
+horizontalBarFill: {
+  height: '100%',
+  borderRadius: 8,
+},
+horizontalBarValue: {
+  fontSize: 12,
+  fontFamily: 'Inter-SemiBold',
+  color: Colors.text,
+  marginLeft: 8,
+  minWidth: 70,
+  textAlign: 'right',
+},
 });

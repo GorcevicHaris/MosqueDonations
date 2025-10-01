@@ -97,6 +97,8 @@ const handleFitrSubmit = async () => {
     }
 
     const amountNumber = parseFloat(amount);
+  console.log(amountNumber,"- amount number")
+
     if (isNaN(amountNumber) || amountNumber <= 0) {
       Alert.alert('Greška', 'Molimo unesite valjan iznos');
       return;
@@ -144,7 +146,7 @@ const handleFitrSubmit = async () => {
 
   if (!user) {
     return null;
-  }
+  } 
 
   console.log('Purposes in AddDonationScreen:', purposes); // Provera u konzoli
 

@@ -18,10 +18,19 @@ import { Building, Calendar, Plus, Trash2 } from 'lucide-react-native';
 export default function HomeScreen() {
   const { user, loading } = useAuth();
   const { fetchDonations, fridayDonations, deleteDonation, getDonationsByPurpose ,fetchSummary,summary} = useDonations();
+   if (loading || !user) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Učitavanje...</Text>
+      </View>
+    );
+  }
+
   const [showAll, setShowAll] = React.useState(false);
   const sortedDonations = [...fridayDonations].sort((a, b) => {
   return new Date(b.donation_date).getTime() - new Date(a.donation_date).getTime();
 });
+
 const donationsToShow = showAll
   ? [...fridayDonations].reverse()
   : [...fridayDonations].reverse().slice(0, 3);
@@ -43,13 +52,7 @@ const donationsToShow = showAll
     }
   }, [loading, user?.id]);
 
-  if (loading || !user) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Učitavanje...</Text>
-      </View>
-    );
-  }
+
   useEffect(() => {
   if (user) {
     fetchDonations(Number(user.id));
