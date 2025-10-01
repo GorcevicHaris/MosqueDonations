@@ -10,7 +10,7 @@ app.use(express.json());
 // CORS za razvoj
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://192.168.0.103:8080"],
+    origin: ["http://localhost:3000", "http://192.168.0.117:8080"],
     credentials: true,
   })
 );
@@ -61,6 +61,7 @@ app.post("/register", async (req, res) => {
 
 // ✅ LOGIN
 app.post("/login", async (req, res) => {
+  console.log("Checking is login working");
   const { email, password } = req.body;
   try {
     const conn = await getConnection();
@@ -371,6 +372,29 @@ app.get("/donations/count/:userId", async (req, res) => {
       .json({ error: "Greška prilikom izvlačenja broja donacija." });
   } finally {
     await conn.end();
+  }
+});
+
+// GET /mosque/:id - vraća podatke o džamiji po ID-ju
+app.get("/mosque/:id", async (req, res) => {
+  const mosqueId = req.params.id;
+
+  try {
+    const conn = await getConnection();
+    const [rows] = await conn.execute(
+      "SELECT id, name, city, address, created_at FROM mosques WHERE id = ?",
+      [mosqueId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Džamija nije pronađena." });
+    }
+
+    res.json(rows[0]);
+    await conn.end();
+  } catch (err) {
+    console.error("Greška prilikom dohvaćanja džamije:", err.message);
+    res.status(500).json({ error: "Greška na serveru." });
   }
 });
 
