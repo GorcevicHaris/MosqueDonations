@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { API_URL } from '@/constants/Api'; // Postavi API_URL u constants
+import { API_URL } from '@/constants/Api';
 
 interface User {
   id: string;
@@ -13,7 +13,8 @@ interface User {
 }
 
 interface RegisterData {
-  mosqueName: string;
+  mosqueId?: number; // Make it optional to support both methods
+  mosqueName?: string;
   fullName: string;
   email: string;
   password: string;
@@ -30,7 +31,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Postavi axios interceptor za automatsko dodavanje tokena
+// Postavi axios interceptor za automatsko davanje tokena
 axios.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('token');
@@ -51,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userData = await AsyncStorage.getItem('user');
         const token = await AsyncStorage.getItem('token');
-        console.log('Loaded user:', userData, 'Loaded token:', token); // Debug
+        console.log('Loaded user:', userData, 'Loaded token:', token);
         if (userData && token) {
           setUser(JSON.parse(userData));
         }
@@ -72,8 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log('✅ Backend login response:', response.data);
 
-      const userFromApi = response.data.user; // Pristup user objektu iz responsa
-      const token = response.data.token; // Pristup tokenu iz responsa
+      const userFromApi = response.data.user;
+      const token = response.data.token;
 
       if (!token || !userFromApi) throw new Error('Invalid login response');
 
@@ -83,10 +84,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: userFromApi.email,
         role: userFromApi.role,
         mosqueId: userFromApi.mosque_id.toString(),
-        mosqueName: userFromApi.mosque_name || '', // Koristi mosque_name iz responsa
+        mosqueName: userFromApi.mosque_name || '',
       };
 
-      await AsyncStorage.setItem('token', token); // Čuvanje tokena
+      await AsyncStorage.setItem('token', token);
       await AsyncStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       return true;
@@ -102,18 +103,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('Register data:', userData);
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/register`, {
-        mosque_name: userData.mosqueName,
+      // Support both mosque_id and mosque_name registration
+      const requestData: any = {
         full_name: userData.fullName,
         email: userData.email,
         password: userData.password,
         role: userData.role,
-      });
+      };
 
-      if (response.status === 201 && response.data) {
-        const { token, user: registeredUser } = response.data; // Pretpostavljam da API vraća token i user
-        if (!token || !registeredUser) throw new Error('Invalid registration response');
+      // If mosqueId is provided, use it; otherwise use mosqueName
+      if (userData.mosqueId) {
+        requestData.mosque_id = userData.mosqueId;
+      } else if (userData.mosqueName) {
+        requestData.mosque_name = userData.mosqueName;
+      }
 
+      const response = await axios.post(`${API_URL}/register`, requestData);
+      
+      console.log('✅ Registration response:', response.data);
+      console.log('Response status:', response.status);
+
+      // Check if backend returns token and user directly
+      if (response.data.token && response.data.user) {
+        const { token, user: registeredUser } = response.data;
+        
         const userData: User = {
           id: registeredUser.id.toString(),
           fullName: registeredUser.full_name,
@@ -127,11 +140,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await AsyncStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
         return true;
+      } 
+      // If backend only returns success message, login after registration
+      else if (response.data.message || response.status === 201 || response.status === 200) {
+        console.log('Registration successful, logging in...');
+        // Automatically login after registration
+        return await login(userData.email, userData.password);
       } else {
+        console.error('❌ Unexpected response format');
         return false;
       }
-    } catch (error) {
-      console.error('Registration error:', error);
+    } catch (error: any) {
+      console.error('❌ Registration error:', error?.response?.data || error.message);
       return false;
     } finally {
       setLoading(false);

@@ -86,6 +86,7 @@ export const DonationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         console.log(token,response,"provera da li radi")
         if (!response.ok) throw new Error('Failed to fetch purposes');
         const data: Purpose[] = await response.json();
+        console.log(data," - namene ?")
         setPurposes(data);
       } catch (error) {
         console.error('Error fetching purposes:', error);
@@ -94,21 +95,29 @@ export const DonationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     fetchPurposes();
   }, []);
 
-  const fetchDonations = async (userId: number) => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      if (!token) throw new Error('No authentication token');
-      const response = await fetch(`${API_URL}/donations/user/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to fetch donations');
-      const data: Donation[] = await response.json();
-      setFridayDonations(data);
-    } catch (error) {
-      console.error('Error fetching donations:', error);
-      throw error;
+ const fetchDonations = async (userId: number) => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+      console.warn('No authentication token');
+      return;
     }
-  };
+    const response = await fetch(`${API_URL}/donations/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+      console.warn('Failed to fetch donations');
+      return;
+    }
+
+    const data: Donation[] = await response.json();
+    setFridayDonations(data);
+  } catch (error) {
+    console.error('Error fetching donations:', error);
+  }
+};
+
 
   const addFridayDonation = async (donation: FitrZakatFridayPayload) => {
     try {
@@ -184,6 +193,7 @@ export const DonationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
       if (!response.ok) throw new Error('Greska prilikom brisanja donacije');
 
+      setFridayDonations((prev)=> prev.filter(d => d.id !== donationId))
       await fetchDonations(donationToDelete.user_id);
       await fetchSummary(donationToDelete.user_id);
     } catch (error) {
@@ -191,6 +201,7 @@ export const DonationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       throw error;
     }
   };
+
 
   const getTotalDonations = () => {
     return fridayDonations.reduce((total, donation) => total + donation.amount, 0);

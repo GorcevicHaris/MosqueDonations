@@ -60,21 +60,32 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/register`, {
-        mosque_id: selectedMosqueId,
-        full_name: fullName,
+      // Get the selected mosque name
+      const selectedMosque = mosques.find(m => m.id === selectedMosqueId);
+      
+      if (!selectedMosque) {
+        Alert.alert('Greška', 'Molimo izaberite džamiju');
+        return;
+      }
+
+      // Use the register function from AuthContext with mosqueId
+      const success = await register({
+        mosqueId: selectedMosqueId,
+        fullName,
         email,
         password,
         role: 'imam',
       });
 
-      if (response.data?.message === 'User registered successfully.') {
+      if (success) {
+        // User is now authenticated, navigate to tabs
         router.replace('/(tabs)');
       } else {
-        Alert.alert('Greška', 'Došlo je do greške prilikom registracije');
+        Alert.alert('Greška', 'Registracija nije uspela. Pokušajte ponovo.');
       }
     } catch (error) {
-      Alert.alert('Greška', 'Registracija nije uspela. Pokušajte kasnije.');
+      console.error('Registration error:', error);
+      Alert.alert('Greška', 'Došlo je do greške prilikom registracije');
     } finally {
       setLoading(false);
     }

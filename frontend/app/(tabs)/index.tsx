@@ -17,15 +17,18 @@ import { Building, Calendar, Plus, Trash2 } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const { user, loading } = useAuth();
-  const { fetchDonations, fridayDonations, deleteDonation, getDonationsByPurpose ,fetchSummary,summary} = useDonations();
-   if (loading || !user) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Učitavanje...</Text>
-      </View>
-    );
-  }
+  console.log(user,"user1345")
 
+  const { fetchDonations, fridayDonations, deleteDonation, getDonationsByPurpose ,fetchSummary,summary} = useDonations();
+  //  if (loading || !user) {
+  //   console.log(user)
+  //   return (
+  //     <View style={styles.loadingContainer}>
+  //       <Text style={styles.loadingText}>Učitavanje...</Text>
+  //     </View>
+  //   );
+  // }
+  //changed promenjeno
   const [showAll, setShowAll] = React.useState(false);
   const sortedDonations = [...fridayDonations].sort((a, b) => {
   return new Date(b.donation_date).getTime() - new Date(a.donation_date).getTime();
@@ -95,12 +98,14 @@ const donationsToShow = showAll
         style={styles.header}
       >
         <View style={styles.headerContent}>
-          <Text style={styles.greeting}>السلام عليكم</Text>
-          <Text style={styles.userName}>{user.fullName}{" "}{user.id}</Text>
-          <View style={styles.mosqueInfo}>
-            <Building color={Colors.white} size={16} />
-            <Text style={styles.mosqueName}>{user.mosqueName}</Text>
-          </View>
+       <Text style={styles.userName}>
+  {user ? `${user.fullName} ${user.id}` : ''}
+</Text>
+<View style={styles.mosqueInfo}>
+  <Building color={Colors.white} size={16} />
+  <Text style={styles.mosqueName}>{user ? user.mosqueName : ''}</Text>
+</View>
+
         </View>
       </LinearGradient>
 
@@ -136,10 +141,16 @@ const donationsToShow = showAll
 <View style={styles.statsContainer}>
   <View style={styles.statCard}>
     <Text style={styles.statLabel}>Fitr</Text>
-<Text style={styles.statValue}>{formatPrice(summary.fitr)} Din</Text>  </View>
+    <Text style={styles.statValue}>
+      {formatPrice(summary?.fitr || 0)} Din
+    </Text>
+  </View>
   <View style={styles.statCard}>
     <Text style={styles.statLabel}>Zekat</Text>
-<Text style={styles.statValue}>{formatPrice(summary.zakat)} Din</Text>  </View>
+    <Text style={styles.statValue}>
+      {formatPrice(summary?.zakat || 0)} Din
+    </Text>
+  </View>
 </View>
 {donationsToShow.length > 0 ? (
   <>
@@ -188,9 +199,7 @@ const donationsToShow = showAll
     </TouchableOpacity>
   </View>
 )}
-
         </View>
-
         {Object.keys(donationsByPurpose).length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Donacije po nameni</Text>

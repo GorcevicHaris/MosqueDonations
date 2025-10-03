@@ -17,6 +17,7 @@ import { Colors } from '../../constants/Colors';
 import { Mail, Lock, LogIn } from 'lucide-react-native';
 import axios, { AxiosError } from 'axios';
 import { API_URL } from '@/constants/Api';
+import { useEffect } from 'react';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

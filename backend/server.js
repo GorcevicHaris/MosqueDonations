@@ -10,7 +10,7 @@ app.use(express.json());
 // CORS za razvoj
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://192.168.0.117:8080"],
+    origin: ["http://localhost:3000", "http://192.168.0.110:8080"],
     credentials: true,
   })
 );
