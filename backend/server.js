@@ -378,7 +378,7 @@ app.get("/donations/count/:userId", async (req, res) => {
 // GET /mosque/:id - vraća podatke o džamiji po ID-ju
 app.get("/mosque/:id", async (req, res) => {
   const mosqueId = req.params.id;
-
+  console.log(mosqueId, "provera da li je id ispravan");
   try {
     const conn = await getConnection();
     const [rows] = await conn.execute(

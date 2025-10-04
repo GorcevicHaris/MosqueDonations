@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -23,18 +23,25 @@ interface User {
 
 export default function AddDonationScreen() {
   const { user } = useAuth();
-  const { purposes, addFridayDonation ,addFitrDonation, addZakatDonation} = useDonations();
+  const { purposes, addFridayDonation ,addFitrDonation, addZakatDonation,fetchPurposes} = useDonations();
   const [amount, setAmount] = useState<string>('');
   const [selectedPurpose, setSelectedPurpose] = useState<string>('');
   const [donationDate, setDonationDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState<boolean>(false);
-const [fitrAmount, setFitrAmount] = useState<string>('');
-const [fitrYear, setFitrYear] = useState<string>(new Date().getFullYear().toString());
-const [loadingFitr, setLoadingFitr] = useState(false);
-const [zakatAmount, setZakatAmount] = useState<string>('');
-const [zakatYear, setZakatYear] = useState<string>(new Date().getFullYear().toString());
-const [loadingZakat, setLoadingZakat] = useState(false);
+  const [fitrAmount, setFitrAmount] = useState<string>('');
+  const [fitrYear, setFitrYear] = useState<string>(new Date().getFullYear().toString());
+  const [loadingFitr, setLoadingFitr] = useState(false);
+  const [zakatAmount, setZakatAmount] = useState<string>('');
+  const [zakatYear, setZakatYear] = useState<string>(new Date().getFullYear().toString());
+  const [loadingZakat, setLoadingZakat] = useState(false);
 
+
+  useEffect(()=>{
+    if(purposes.length == 0){
+      fetchPurposes().catch(console.error)
+    }
+  },[])
+  
 const handleZakatSubmit = async () => {
   const amountNumber = parseFloat(zakatAmount);
   if (isNaN(amountNumber) || amountNumber <= 0) {

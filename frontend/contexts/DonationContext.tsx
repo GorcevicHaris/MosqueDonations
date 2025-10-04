@@ -48,6 +48,7 @@ interface DonationContextType {
   addZakatDonation: (donation: FitrZakatFridayPayload) => Promise<void>;
   addFridayDonation: (donation: FitrZakatFridayPayload) => Promise<void>;
   fetchSummary: (userId: number) => Promise<void>;
+  fetchPurposes:()=>  Promise<void>;
   getTotalDonationsCount: () => number;
   summary: Summary;
 }
@@ -75,25 +76,45 @@ export const DonationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setSummary(data);
   };
 
-  useEffect(() => {
-    const fetchPurposes = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        if (!token) return;
-        const response = await fetch(`${API_URL}/purposes`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log(token,response,"provera da li radi")
-        if (!response.ok) throw new Error('Failed to fetch purposes');
-        const data: Purpose[] = await response.json();
-        console.log(data," - namene ?")
-        setPurposes(data);
-      } catch (error) {
-        console.error('Error fetching purposes:', error);
-      }
-    };
-    fetchPurposes();
-  }, []);
+  // useEffect(() => {
+  //   const fetchPurposes = async () => {
+  //     try {
+  //       const token = await AsyncStorage.getItem('token');
+  //       if (!token) return;
+  //       const response = await fetch(`${API_URL}/purposes`, {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       });
+  //       console.log(token,response,"provera da li radi")
+  //       if (!response.ok) throw new Error('Failed to fetch purposes');
+  //       const data: Purpose[] = await response.json();
+  //       console.log(data," - namene ?")
+  //       setPurposes(data);
+  //     } catch (error) {
+  //       console.error('Error fetching purposes:', error);
+  //     }
+  //   };
+  //   fetchPurposes();
+  // }, []);
+
+  const fetchPurposes = async () => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) return;
+    
+    const response = await fetch(`${API_URL}/purposes`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    
+    if (!response.ok) throw new Error('Failed to fetch purposes');
+    
+    const data: Purpose[] = await response.json();
+    console.log(data, " - namene ?")
+    setPurposes(data);
+  } catch (error) {
+    console.error('Error fetching purposes:', error);
+    throw error;
+  }
+};
 
  const fetchDonations = async (userId: number) => {
   try {
@@ -235,6 +256,7 @@ const getTotalDonationsCount = () => {
         fetchSummary,
         summary,
         getTotalDonationsCount,
+        fetchPurposes,
       }}
     >
       {children}
