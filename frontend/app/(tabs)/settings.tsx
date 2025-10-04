@@ -49,6 +49,14 @@ export default function SettingsScreen() {
     router.push('/mosque-details');
   }
 
+  function handleHelpNavigation() {
+  router.push('/help-support');
+  }
+
+  function handleAboutNavigation() {
+    router.push('/about-app');
+  }
+
   if (!user) {
     return null;
   }
@@ -85,43 +93,31 @@ export default function SettingsScreen() {
 
         <View style={styles.menuSection}>
           <Text style={styles.sectionTitle}>Nalog</Text>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemContent}>
-              <User color={Colors.textSecondary} size={20} />
-              <Text style={styles.menuItemText}>Informacije o profilu</Text>
-            </View>
-            <ChevronRight color={Colors.textLight} size={20} />
-          </TouchableOpacity>
-
         <TouchableOpacity style={styles.menuItem} onPress={handleNavigation}>
           <View style={styles.menuItemContent}>
-          <Building color={Colors.textSecondary} size={20} />
+          <Building color={Colors.textSecondary} size={20} />      
           <Text style={styles.menuItemText}>Podaci o džamiji</Text>
           </View>
           <ChevronRight color={Colors.textLight} size={20} />
-</TouchableOpacity>
-
+        </TouchableOpacity>
         </View>
-
         <View style={styles.menuSection}>
           <Text style={styles.sectionTitle}>Aplikacija</Text>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemContent}>
-              <HelpCircle color={Colors.textSecondary} size={20} />
-              <Text style={styles.menuItemText}>Pomoć i podrška</Text>
-            </View>
-            <ChevronRight color={Colors.textLight} size={20} />
-          </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem} onPress={handleHelpNavigation}>
+        <View style={styles.menuItemContent}>
+          <HelpCircle color={Colors.textSecondary} size={20} />
+          <Text style={styles.menuItemText}>Pomoć i podrška</Text>
+        </View>
+        <ChevronRight color={Colors.textLight} size={20} />
+      </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemContent}>
-              <Info color={Colors.textSecondary} size={20} />
-              <Text style={styles.menuItemText}>O aplikaciji</Text>
-            </View>
-            <ChevronRight color={Colors.textLight} size={20} />
-          </TouchableOpacity>
+<TouchableOpacity style={styles.menuItem} onPress={handleAboutNavigation}>
+  <View style={styles.menuItemContent}>
+    <Info color={Colors.textSecondary} size={20} />
+    <Text style={styles.menuItemText}>O aplikaciji</Text>
+  </View>
+  <ChevronRight color={Colors.textLight} size={20} />
+</TouchableOpacity>
         </View>
 
         <View style={styles.infoCard}>
